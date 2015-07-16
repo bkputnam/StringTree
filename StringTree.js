@@ -1,4 +1,4 @@
-(function(root) {
+(function(globals) {
 
 	function StringTree(comparator) {
 		this.comparator = comparator;
@@ -40,7 +40,8 @@
 		exports.mymodule = StringTree;
 	} 
 	else {
-		root.mymodule = StringTree;
+		global.mymodule = StringTree;
 	}
 
-})(this);
+})(this); // this will be window, if running in browser
+
