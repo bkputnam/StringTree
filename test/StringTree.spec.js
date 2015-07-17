@@ -173,4 +173,25 @@ describe('StringTree', function(){
 		expect(st.prevKeylist("2015", "02", "01")).toEqual(["2015", "01", "01", "01"]);
 	});
 
+	it("should use custom comparators correctly", function() {
+		var reverseAlphabeticComparator = function(a, b) {
+			return (
+				a < b ? 1 :
+				a > b ? -1 :
+				0
+			);
+		}
+
+		var st = new StringTree(reverseAlphabeticComparator);
+		st.set("a", "a", {});
+		st.set("a", "b", {});
+		st.set("b", "a", {});
+		st.set("b", "b", {});
+
+		expect(st.nextKeylist("b", "b")).toEqual(["b", "a"]);
+		expect(st.nextKeylist("b", "a")).toEqual(["a", "b"]);
+		expect(st.nextKeylist("a", "b")).toEqual(["a", "a"]);
+		expect(typeof st.nextKeylist("a", "a")).toBe("undefined");
+	});
+
 });
