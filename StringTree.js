@@ -98,14 +98,66 @@
 		return minKey;
 	};
 
+	function isEmptyObject(obj) { return Object.keys(obj).length == 0; }
+
+	StringTree.prototype.nextKeylist = function() {
+		var parentStack = [];
+		var shadowStack = [];
+		var currentNode = this.root;
+		var shadowNode = this._shadowRoot;
+
+		// Find the passed element
+		for (var i=0; i<arguments.length; i++) {
+			var key = arguments[i];
+			if (shadowNode.hasOwnProperty(key)) {
+				parentStack.push(currentNode);
+				shadowStack.push(shadowNode);
+
+				currentNode = currentNode[key];
+				shadowNode = shadowNode[key];
+			}
+			else {
+				throw "Unknown key '" + key + "' in StringTree.nextKeylist";
+			}
+		}
+
+		// Passed element must be a leaf node
+		if (!isEmptyObject(shadowNode)) {
+			throw "Keys must reference a leaf node in StringTree.nextKeylist";
+		}
+
+		// Walk up the parentStack until we find a parent
+		// for whom we do not already have the maximum index.
+		// Record the index at which we were able to make
+		// this increment.
+		var nextKey = undefined;
+		var incrementableIndex;
+		for (incrementableIndex=arguments.length-1; i>=0; i--) {
+			currentNode = parentStack[incrementableIndex];
+			var key = arguments[incrementableIndex];
+			var sortedKeys = this._getSortedKeys(currentNode);
+			var keyIndex = sortedKeys.indexOf(key);
+
+			if (keyIndex != sortedKeys.length-1) {
+				nextKey = sortedKeys[keyIndex+1];
+			}
+		}
+
+		var result = Array.prototype.slice(arguments, 0, incrementableIndex);
+		result.push(nextKey);
+		for (var i=incrementableIndex; i<arguments.length; i++) {
+			result.push()
+		}
+	};
+
 	if( typeof exports !== 'undefined' ) {
 		if( typeof module !== 'undefined' && module.exports ) {
 			exports = module.exports = StringTree;
 		}
-		exports.mymodule = StringTree;
+		exports.StringTree = StringTree;
 	} 
 	else {
-		global.mymodule = StringTree;
+		globals.StringTree = StringTree;
 	}
 
 })(this); // this will be window, if running in browser
