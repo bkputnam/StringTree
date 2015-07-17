@@ -20,6 +20,5 @@
   },
   "homepage": "https://github.com/bkputnam/StringTree",
   "devDependencies": {
-    "jasmine-node": "^1.14.5"
   }
 }
