@@ -24,7 +24,7 @@
 
 			for (var i=0; i<arguments.length; i++) {
 				var key = arguments[i];
-				if (shadowRoot.hasOwnProperty(key)) {
+				if (shadowRoot !== null && shadowRoot.hasOwnProperty(key)) {
 					shadowRoot = shadowRoot[key];
 					root = root[key];
 				}
@@ -48,6 +48,9 @@
 			var lastKey = arguments[arguments.length-2];
 			for (var i=0; i<arguments.length-2; i++) {
 				var key = arguments[i];
+				if (shadowRoot === null) {
+					throw "Can't add properties under a leaf node";
+				}
 				if (!shadowRoot.hasOwnProperty(key)) {
 					shadowRoot[key] = {};
 					root[key] = {};
@@ -56,7 +59,7 @@
 				shadowRoot = shadowRoot[key];
 			}
 			root[lastKey] = value;
-			shadowRoot[lastKey] = {};
+			shadowRoot[lastKey] = null; // is a leaf node - can't set properties on a leaf node, can't set properties on 'null'
 		}
 	};
 
@@ -64,10 +67,12 @@
 		return Object.keys(obj).sort(this.comparator);
 	};
 
-	StringTree.prototype.maxKey = function() {
-		var value = this.get.apply(this, arguments);
-
-		var keys = Object.keys(value);
+	StringTree.prototype._maxKey = function(obj) {
+		if (obj === null) {
+			return undefined;
+		}
+		
+		var keys = Object.keys(obj);
 		if (keys.length===0) {
 			return undefined;
 		}
@@ -81,10 +86,16 @@
 		return maxKey;
 	};
 
-	StringTree.prototype.minKey = function() {
-		var value = this.get.apply(this, arguments);
+	StringTree.prototype.maxKey = function() {
+		return this._maxKey(this.get.apply(this, arguments));
+	};
 
-		var keys = Object.keys(value);
+	StringTree.prototype._minKey = function(obj) {
+		if (obj === null) {
+			return undefined;
+		}
+
+		var keys = Object.keys(obj);
 		if (keys.length===0) {
 			return undefined;
 		}
@@ -96,9 +107,11 @@
 			}
 		}
 		return minKey;
-	};
+	}
 
-	function isEmptyObject(obj) { return Object.keys(obj).length == 0; }
+	StringTree.prototype.minKey = function() {
+		return this._minKey(this.get.apply(this, arguments));
+	};
 
 	StringTree.prototype.nextKeylist = function() {
 		var parentStack = [];
@@ -122,7 +135,7 @@
 		}
 
 		// Passed element must be a leaf node
-		if (!isEmptyObject(shadowNode)) {
+		if (shadowNode !== null) {
 			throw "Keys must reference a leaf node in StringTree.nextKeylist";
 		}
 
@@ -132,7 +145,7 @@
 		// this increment.
 		var nextKey = undefined;
 		var incrementableIndex;
-		for (incrementableIndex=arguments.length-1; i>=0; i--) {
+		for (incrementableIndex=arguments.length-1; incrementableIndex>=0; incrementableIndex--) {
 			currentNode = parentStack[incrementableIndex];
 			var key = arguments[incrementableIndex];
 			var sortedKeys = this._getSortedKeys(currentNode);
@@ -140,14 +153,30 @@
 
 			if (keyIndex != sortedKeys.length-1) {
 				nextKey = sortedKeys[keyIndex+1];
+				break;
 			}
 		}
 
-		var result = Array.prototype.slice(arguments, 0, incrementableIndex);
-		result.push(nextKey);
-		for (var i=incrementableIndex; i<arguments.length; i++) {
-			result.push()
+		// No indices were incrementable; the input was already
+		// the max key in the collection
+		if (incrementableIndex < 0) {
+			return undefined;
 		}
+
+		var result = Array.prototype.slice.call(arguments, 0, incrementableIndex);
+
+		currentNode = parentStack[incrementableIndex];
+		shadowNode = shadowStack[incrementableIndex];
+		while(typeof nextKey !== "undefined" && shadowNode.hasOwnProperty(nextKey)) {
+			result.push(nextKey);
+			currentNode = currentNode[nextKey];
+			shadowNode = shadowNode[nextKey];
+
+
+			nextKey = this._minKey(shadowNode);
+		}
+		
+		return result;
 	};
 
 	if( typeof exports !== 'undefined' ) {

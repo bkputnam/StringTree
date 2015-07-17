@@ -11,7 +11,17 @@ describe('StringTree', function(){
 		expect(st.get("foo", "bar", "baz")).toEqual({hello: "world"});
 	});
 
-	it("should return undefined when key is missing", function() {
+	it("must throw when trying to set a property of a leaf node", function() {
+		var st = new StringTree();
+		st.set("foo", "bar", "baz", {hello: "world"});
+		try {
+			st.set("foo", "bar", "baz", "bat", {msg: "this should fail"});
+			fail();
+		}
+		catch (e) { /* pass */ }
+	});
+
+	it("must return undefined when key is missing", function() {
 		var st = new StringTree();
 		st.set("foo", "bar", "baz", {hello: "world"});
 		expect(typeof st.get("foo", "bar", "baz", "bat")).toEqual("undefined");
@@ -95,6 +105,39 @@ describe('StringTree', function(){
 		var st = new StringTree();
 		st.set("foo", "bar", "baz", {hello: "world"});
 		expect(st.get("foo")).toEqual({bar: {baz: {hello: "world"}}});
+	});
+
+	it("should return the next keylist correctly", function() {
+
+		var st = new StringTree();
+		st.set("2015","01", "03", {date: "2015-01-03"});
+		st.set("2015","01", "02", {date: "2015-01-02"});
+		st.set("2015","01", "01", {date: "2015-01-01"});
+		st.set("2014","12", "31", {date: "2014-12-31"});
+		st.set("2014","12", "30", {date: "2014-12-30"});
+		st.set("2014","12", "29", {date: "2014-12-29"});
+
+		try {
+			st.nextKeylist("2015", "01", "04");
+			fail();
+		}
+		catch (e) { /* pass */ }
+
+		expect(typeof st.nextKeylist("2015", "01", "03")).toBe("undefined");
+		expect(st.nextKeylist("2015", "01", "02")).toEqual(["2015", "01", "03"]);
+		expect(st.nextKeylist("2015", "01", "01")).toEqual(["2015", "01", "02"]);
+		expect(st.nextKeylist("2014", "12", "31")).toEqual(["2015", "01", "01"]);
+		expect(st.nextKeylist("2014", "12", "30")).toEqual(["2014", "12", "31"]);
+		expect(st.nextKeylist("2014", "12", "29")).toEqual(["2014", "12", "30"]);
+	});
+
+	it("nextKeylist should recurse as much as possible, but no more", function() {
+
+		var st = new StringTree();
+		st.set("2015","01", "01", {date: "2015-01-01"});
+		st.set("2015","02", "01", "01", {date: "2015-02-01-01"});
+
+		expect(st.nextKeylist("2015", "01", "01")).toEqual(["2015", "02", "01", "01"]);
 	});
 
 });
