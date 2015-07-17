@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/bkputnam/StringTree",
   "devDependencies": {
+    "jasmine": "^2.3.1",
     "jasmine-core": "^2.3.4",
     "karma": "^0.13.1",
     "karma-chrome-launcher": "^0.2.0",
