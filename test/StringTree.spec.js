@@ -140,4 +140,37 @@ describe('StringTree', function(){
 		expect(st.nextKeylist("2015", "01", "01")).toEqual(["2015", "02", "01", "01"]);
 	});
 
+	it("should return prev keylist correctly", function() {
+
+		var st = new StringTree();
+		st.set("2015","01", "03", {date: "2015-01-03"});
+		st.set("2015","01", "02", {date: "2015-01-02"});
+		st.set("2015","01", "01", {date: "2015-01-01"});
+		st.set("2014","12", "31", {date: "2014-12-31"});
+		st.set("2014","12", "30", {date: "2014-12-30"});
+		st.set("2014","12", "29", {date: "2014-12-29"});
+
+		try {
+			st.prevKeylist("2015", "01", "04");
+			fail();
+		}
+		catch (e) { /* pass */ }
+
+		expect(st.prevKeylist("2015", "01", "03")).toEqual(["2015", "01", "02"])
+		expect(st.prevKeylist("2015", "01", "02")).toEqual(["2015", "01", "01"]);
+		expect(st.prevKeylist("2015", "01", "01")).toEqual(["2014", "12", "31"]);
+		expect(st.prevKeylist("2014", "12", "31")).toEqual(["2014", "12", "30"]);
+		expect(st.prevKeylist("2014", "12", "30")).toEqual(["2014", "12", "29"]);
+		expect(typeof st.prevKeylist("2014", "12", "29")).toBe("undefined");
+	});
+
+	it("nextKeylist should recurse as much as possible, but no more", function() {
+
+		var st = new StringTree();
+		st.set("2015","02", "01", {date: "2015-02-01"});
+		st.set("2015","01", "01", "01", {date: "2015-01-01-01"});
+
+		expect(st.prevKeylist("2015", "02", "01")).toEqual(["2015", "01", "01", "01"]);
+	});
+
 });
