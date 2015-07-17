@@ -83,4 +83,18 @@ describe('StringTree', function(){
 		catch (e) { /* pass */ }
 	});
 
+	it("should not recurse into passed values", function() {
+		var st = new StringTree();
+		st.set("foo", {bar: {baz: true} });
+
+		expect(typeof st.get("foo", "bar")).toEqual("undefined");
+		expect(typeof st.get("foo", "bar", "baz")).toEqual("undefined");
+	});
+
+	it("should return inner structure for partial queries", function() {
+		var st = new StringTree();
+		st.set("foo", "bar", "baz", {hello: "world"});
+		expect(st.get("foo")).toEqual({bar: {baz: {hello: "world"}}});
+	});
+
 });
