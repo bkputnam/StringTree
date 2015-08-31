@@ -209,6 +209,9 @@ describe('StringTree', function(){
 		st.set("2015", "03", "08", {});
 		st.set("2015", "03", "11", {});
 
+		st.set("2014", "12", "31", {});
+
+		expect(st.getSortedKeys()).toEqual(["2014", "2015"]);
 		expect(st.getSortedKeys("2015")).toEqual(["03", "06"]);
 		expect(st.getSortedKeys("2015", "03")).toEqual(["07", "08", "11", "20", "23"]);
 		expect(st.getSortedKeys("2015", "06")).toEqual(["06", "10", "17", "19", "22"]);
