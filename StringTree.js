@@ -64,12 +64,13 @@
 	};
 
 	StringTree.prototype.getSortedKeys = function() {
-		if (arguments.length === 0) {
-			return this._getSortedKeys(this._shadowRoot);
-		}
-		else {
-			return this._getSortedKeys(this.get.apply(this, arguments));
-		}
+		var obj = (arguments.length === 0)
+			? this._shadowRoot
+			: this.get.apply(this, arguments);
+
+		return (typeof obj == "undefined")
+			? undefined
+			: this._getSortedKeys(obj);
 	};
 
 	StringTree.prototype._getSortedKeys = function(obj) {

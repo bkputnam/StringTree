@@ -218,4 +218,15 @@ describe('StringTree', function(){
 
 	});
 
+	it("sortedKeys should fail correctly", function() {
+
+		var st = new StringTree();
+
+		expect(st.getSortedKeys()).toEqual([]);
+		expect(typeof st.getSortedKeys("2015")).toEqual("undefined");
+		expect(typeof st.getSortedKeys("2015", "03")).toEqual("undefined");
+		expect(typeof st.getSortedKeys("2015", "06")).toEqual("undefined");
+
+	});
+
 });
