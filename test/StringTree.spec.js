@@ -229,4 +229,17 @@ describe('StringTree', function(){
 
 	});
 
+	// bugfix: calling st.minKey() or st.maxKey() with no parameters
+	// failed due to get() failing with no parameters
+	it("must get root min and max keys correctly", function() {
+		var st = new StringTree();
+		st.set("2015", {});
+		st.set("1999", {});
+		st.set("2013", {});
+		st.set("2014", {});
+
+		expect(st.minKey()).toEqual("1999");
+		expect(st.maxKey()).toEqual("2015");
+	});
+
 });

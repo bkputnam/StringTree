@@ -97,7 +97,11 @@
 	};
 
 	StringTree.prototype.maxKey = function() {
-		return this._maxKey(this.get.apply(this, arguments));
+		var obj = (arguments.length === 0)
+			? this._shadowRoot
+			: this.get.apply(this, arguments);
+
+		return this._maxKey(obj);
 	};
 
 	StringTree.prototype._minKey = function(obj) {
@@ -120,7 +124,11 @@
 	}
 
 	StringTree.prototype.minKey = function() {
-		return this._minKey(this.get.apply(this, arguments));
+		var obj = (arguments.length === 0)
+			? this._shadowRoot
+			: this.get.apply(this, arguments);
+
+		return this._minKey(obj);
 	};
 
 	StringTree.prototype.nextKeylist = function() {
