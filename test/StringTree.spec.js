@@ -194,4 +194,25 @@ describe('StringTree', function(){
 		expect(typeof st.nextKeylist("a", "a")).toBe("undefined");
 	});
 
+	it("sortedKeys should work correctly", function() {
+
+		var st = new StringTree();
+		st.set("2015", "06", "19", {});
+		st.set("2015", "06", "17", {});
+		st.set("2015", "06", "22", {});
+		st.set("2015", "06", "06", {});
+		st.set("2015", "06", "10", {});
+
+		st.set("2015", "03", "23", {});
+		st.set("2015", "03", "07", {});
+		st.set("2015", "03", "20", {});
+		st.set("2015", "03", "08", {});
+		st.set("2015", "03", "11", {});
+
+		expect(st.getSortedKeys("2015")).toEqual(["03", "06"]);
+		expect(st.getSortedKeys("2015", "03")).toEqual(["07", "08", "11", "20", "23"]);
+		expect(st.getSortedKeys("2015", "06")).toEqual(["06", "10", "17", "19", "22"]);
+
+	});
+
 });

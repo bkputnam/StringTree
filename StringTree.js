@@ -63,6 +63,10 @@
 		}
 	};
 
+	StringTree.prototype.getSortedKeys = function() {
+		return this._getSortedKeys(this.get.apply(this, arguments));
+	};
+
 	StringTree.prototype._getSortedKeys = function(obj) {
 		return Object.keys(obj).sort(this.comparator);
 	};
