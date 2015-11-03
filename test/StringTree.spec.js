@@ -11,6 +11,39 @@ describe('StringTree', function(){
 			0
 		);
 	};
+
+	function populateThreeLevelTree(st, lvl1Keys, lvl2Keys, lvl3Keys) {
+		var index = 0;
+		lvl1Keys.forEach(function(lvl1Key) {
+			lvl2Keys.forEach(function(lvl2Key) {
+				lvl3Keys.forEach(function(lvl3Key) {
+					st.set(lvl1Key, lvl2Key, lvl3Key, {val: index});
+					index++;
+				})
+			})
+		});
+
+		return st;
+	}
+
+	var SORTED_LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
+	var SORTED_NUMBERS = [
+		"1", "2", "3", "04",
+		"11", "12", "13",
+		"20", "30", "40"
+	];
+	var SORTED_MAMMALS = ["cat", "dog", "heffalump", "moose", "mouse"];
+
+	var ALPHABETICALLY_SORTED_NUMBERS = ['04', '1', '11', '12', '13', '2', '20', '3', '30', '40'];
+
+	var SHUFFLED_LETTERS = "hrtlzmvwqsnkxyjpcoeiufdgab".split("");
+	var SHUFFLED_NUMBERS = ["40", "30", "1", "04", "12", "13", "2", "20", "3", "11"];
+	var SHUFFLED_MAMMALS = ["cat", "mouse", "heffalump", "moose", "dog"];
+
+	var REVERSE_LETTERS = "zyxwvutsrqponmlkjihgfedcba".split("");
+	var REVERSE_NUMBERS = ["40", "30", "20", "13", "12", "11", "04", "3", "2", "1"];
+	var REVERSE_MAMMALS = ["mouse", "moose", "heffalump", "dog", "cat"];
+
 	it('must get and set values', function(){
 		var st = new StringTree();
 		st.set("foo", "bar", "baz", {hello: "world"});
@@ -239,6 +272,45 @@ describe('StringTree', function(){
 
 		expect(st.minKey()).toEqual("1999");
 		expect(st.maxKey()).toEqual("2015");
+	});
+
+	it("should be able to sort different levels differently", function() {
+		var st = new StringTree();
+		populateThreeLevelTree(st, SHUFFLED_LETTERS, SHUFFLED_NUMBERS, SHUFFLED_MAMMALS);
+
+		st.setDefaultComparator(StringTree.localeComparator);
+		st.setLevelComparator(1, StringTree.parseIntComparator);
+
+		expect(st.getSortedKeys()).toEqual(SORTED_LETTERS);
+		expect(st.getSortedKeys("a")).toEqual(SORTED_NUMBERS);
+		expect(st.getSortedKeys("a", "1")).toEqual(SORTED_MAMMALS);
+	});
+
+	it("constructor should accept parameters (defaultComparator, levelComparators)", function() {
+		var st = new StringTree(StringTree.localeComparator, [StringTree.parseIntComparator]);
+		populateThreeLevelTree(st, SHUFFLED_NUMBERS, SHUFFLED_LETTERS, SHUFFLED_MAMMALS);
+
+		expect(st.getSortedKeys()).toEqual(SORTED_NUMBERS);
+		expect(st.getSortedKeys("1")).toEqual(SORTED_LETTERS);
+		expect(st.getSortedKeys("1", "a")).toEqual(SORTED_MAMMALS);
+	});
+
+	it("constructor should accept parameters (defaultComparator)", function() {
+		var st = new StringTree(StringTree.localeComparator);
+		populateThreeLevelTree(st, SHUFFLED_NUMBERS, SHUFFLED_LETTERS, SHUFFLED_MAMMALS);
+
+		expect(st.getSortedKeys()).toEqual(ALPHABETICALLY_SORTED_NUMBERS);
+		expect(st.getSortedKeys("1")).toEqual(SORTED_LETTERS);
+		expect(st.getSortedKeys("1", "a")).toEqual(SORTED_MAMMALS);
+	});
+
+	it("constructor should accept parameters (levelComparators)", function() {
+		var st = new StringTree([StringTree.localeComparator, StringTree.localeComparator]);
+		populateThreeLevelTree(st, SHUFFLED_LETTERS, SHUFFLED_MAMMALS, SHUFFLED_NUMBERS);
+
+		expect(st.getSortedKeys()).toEqual(SORTED_LETTERS);
+		expect(st.getSortedKeys("a")).toEqual(SORTED_MAMMALS);
+		expect(st.getSortedKeys("a", "dog")).toEqual(SORTED_NUMBERS);
 	});
 
 });

@@ -1,18 +1,59 @@
 (function(globals) {
 
-	function StringTree(comparator) {
-		this.comparator = comparator || StringTree.defaultComparator;
+	function assertFunction(fn, curFnName) {
+		var isFunction = fn && ({}.toString.call(fn) == '[object Function]');
+		if (!isFunction) {
+			throw curFnName + ' :\'' + fn + '\' is not a function';
+		}
+	}
+
+	function StringTree(comparator, comparators) {
+		if( arguments.length === 2 ) {
+			this.defaultComparator = comparator;
+			this.levelComparators = comparators;
+		}
+		else if( arguments.length === 1 ) {
+			if( Array.isArray( comparator ) ) {
+				this.defaultComparator = StringTree.defaultComparator;
+				this.levelComparators = comparator;
+			}
+			else {
+				this.defaultComparator = comparator;
+				this.levelComparators = {};
+			}
+		}
+		else if( arguments.length === 0 ) {
+			this.defaultComparator = StringTree.defaultComparator;
+			this.levelComparators = {};
+		}
+
 		this.root = {};
 		this._shadowRoot = {};
 	}
 
-	StringTree.defaultComparator = function(a, b) {
+	// This comparator compares keys by passing them through
+	// parseInt and comparing the results in ascending order
+	StringTree.parseIntComparator = function(a, b) {
 		a = parseInt(a);
 		b = parseInt(b);
 		if (a < b) { return -1; }
 		else if (b < a) { return 1; }
 		else { return 0; }
 	};
+
+	// This comparator compares keys alphabetically using
+	// String.prototype.localeCompare. This should usually
+	// produce the desired results but it's worth noting
+	// that this may produce different results in different
+	// browsers or on computers with different location
+	// settings.
+	StringTree.localeComparator = function(a, b) {
+		a = '' + a; // convert to string
+		b = '' + b; // convert to string
+		return a.localeCompare(b);
+	};
+
+	StringTree.defaultComparator = StringTree.parseIntComparator;
 
 	StringTree.prototype.get = function() {
 		if (arguments.length < 1) {
@@ -63,6 +104,25 @@
 		}
 	};
 
+	StringTree.prototype.setDefaultComparator = function(comparator) {
+		assertFunction(comparator, "setDefaultComparator");
+		this.defaultComparator = comparator;
+	};
+
+	StringTree.prototype.setLevelComparator = function(levelIndex, comparator) {
+		assertFunction(comparator, "setLevelComparator");
+		this.levelComparators[levelIndex] = comparator;
+	};
+
+	StringTree.prototype._getLevelComparator = function(levelIndex) {
+		if (this.levelComparators.hasOwnProperty(levelIndex)) {
+			return this.levelComparators[levelIndex];
+		}
+		else {
+			return this.defaultComparator;
+		}
+	};
+
 	StringTree.prototype.getSortedKeys = function() {
 		var obj = (arguments.length === 0)
 			? this._shadowRoot
@@ -70,14 +130,17 @@
 
 		return (typeof obj == "undefined")
 			? undefined
-			: this._getSortedKeys(obj);
+			: this._getSortedKeys(obj, this._getLevelComparator(arguments.length));
 	};
 
-	StringTree.prototype._getSortedKeys = function(obj) {
-		return Object.keys(obj).sort(this.comparator);
+	StringTree.prototype._getSortedKeys = function(obj, comparator) {
+		assertFunction(comparator, "_getSortedKeys");
+		return Object.keys(obj).sort(comparator);
 	};
 
-	StringTree.prototype._maxKey = function(obj) {
+	function _maxKey(obj, comparator) {
+		assertFunction(comparator, "_maxKey");
+
 		if (obj === null) {
 			return undefined;
 		}
@@ -89,7 +152,7 @@
 
 		var maxKey = keys[0];
 		for (var i=1; i<keys.length; i++) {
-			if (this.comparator(keys[i], maxKey) > 0) {
+			if (comparator(keys[i], maxKey) > 0) {
 				maxKey = keys[i];
 			}
 		}
@@ -100,11 +163,14 @@
 		var obj = (arguments.length === 0)
 			? this._shadowRoot
 			: this.get.apply(this, arguments);
+		var comparator = this._getLevelComparator(arguments.length);
 
-		return this._maxKey(obj);
+		return _maxKey(obj, comparator);
 	};
 
-	StringTree.prototype._minKey = function(obj) {
+	function _minKey(obj, comparator) {
+		assertFunction(comparator, "_minKey");
+
 		if (obj === null) {
 			return undefined;
 		}
@@ -116,7 +182,7 @@
 
 		var minKey = keys[0];
 		for (var i=1; i<keys.length; i++) {
-			if (this.comparator(keys[i], minKey) < 0) {
+			if (comparator(keys[i], minKey) < 0) {
 				minKey = keys[i];
 			}
 		}
@@ -127,8 +193,9 @@
 		var obj = (arguments.length === 0)
 			? this._shadowRoot
 			: this.get.apply(this, arguments);
+		var comparator = this._getLevelComparator(arguments.length);
 
-		return this._minKey(obj);
+		return _minKey(obj, comparator);
 	};
 
 	StringTree.prototype.nextKeylist = function() {
@@ -159,13 +226,15 @@
 
 		// Walk up the parentStack until we find a parent
 		// for whom we do not already have the maximum index.
-		// Record the index at which we were able to make
-		// this increment.
+		// When we're done, incrementableIndex will contain
+		// the largest index which we were able to increment.
 		var nextKey, incrementableIndex;
 		for (incrementableIndex=arguments.length-1; incrementableIndex>=0; incrementableIndex--) {
 			currentNode = parentStack[incrementableIndex];
+			var comparator = this._getLevelComparator(incrementableIndex);
+
 			var key = arguments[incrementableIndex];
-			var sortedKeys = this._getSortedKeys(currentNode);
+			var sortedKeys = this._getSortedKeys(currentNode, comparator);
 			var keyIndex = sortedKeys.indexOf(key);
 
 			if (keyIndex != sortedKeys.length-1) {
@@ -184,12 +253,15 @@
 
 		currentNode = parentStack[incrementableIndex];
 		shadowNode = shadowStack[incrementableIndex];
+		var index = incrementableIndex;
 		while(typeof nextKey !== "undefined" && shadowNode.hasOwnProperty(nextKey)) {
 			result.push(nextKey);
 			currentNode = currentNode[nextKey];
 			shadowNode = shadowNode[nextKey];
+			var comparator = this._getLevelComparator(index)
 
-			nextKey = this._minKey(shadowNode);
+			nextKey = _minKey(shadowNode, comparator);
+			index++;
 		}
 		
 		return result;
@@ -223,13 +295,15 @@
 
 		// Walk up the parentStack until we find a parent
 		// for whom we do not already have the minimum index.
-		// Record the index at which we were able to make
-		// this decrement.
+		// When we're done, incrementableIndex will contain
+		// the largest index which we were able to increment.
 		var nextKey, incrementableIndex;
 		for (incrementableIndex=arguments.length-1; incrementableIndex>=0; incrementableIndex--) {
 			currentNode = parentStack[incrementableIndex];
+			var comparator = this._getLevelComparator(incrementableIndex);
+
 			var key = arguments[incrementableIndex];
-			var sortedKeys = this._getSortedKeys(currentNode);
+			var sortedKeys = this._getSortedKeys(currentNode, comparator);
 			var keyIndex = sortedKeys.indexOf(key);
 
 			if (keyIndex !== 0) {
@@ -248,12 +322,15 @@
 
 		currentNode = parentStack[incrementableIndex];
 		shadowNode = shadowStack[incrementableIndex];
+		var index = incrementableIndex;
 		while(typeof nextKey !== "undefined" && shadowNode.hasOwnProperty(nextKey)) {
 			result.push(nextKey);
 			currentNode = currentNode[nextKey];
 			shadowNode = shadowNode[nextKey];
+			var comparator = this._getLevelComparator(index);
 
-			nextKey = this._maxKey(shadowNode);
+			nextKey = _maxKey(shadowNode, comparator);
+			index++;
 		}
 
 		return result;
