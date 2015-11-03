@@ -23,7 +23,7 @@ var st = new StringTree(comparator, comparatorArray); // [4]
 1. Use the default values: use `StringTree.parseIntComparator` as the comparator
 for the whole tree.
 2. Specify your own comparator to use for the whole tree.
-3. Similar to [1], use `[StringTree.parseIntComparator]` as the default for the whole tree, but
+3. Similar to [1], use `StringTree.parseIntComparator` as the default for the whole tree, but
 specify per-level overrides starting at level 0. Levels greater than `comparatorArray.length` will
 fall back to the default comparator. The parameter `comparatorArray` must be an array of functions.
 In particular `Array.isArray(comparatorArray)` must return true or the code will think that [2]
