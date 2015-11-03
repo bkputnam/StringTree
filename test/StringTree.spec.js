@@ -4,6 +4,13 @@ if( typeof StringTree === 'undefined' ) {
 
 describe('StringTree', function(){
 
+	var reverseAlphabeticComparator = function(a, b) {
+		return (
+			a < b ? 1 :
+			a > b ? -1 :
+			0
+		);
+	};
 	it('must get and set values', function(){
 		var st = new StringTree();
 		st.set("foo", "bar", "baz", {hello: "world"});
@@ -37,7 +44,7 @@ describe('StringTree', function(){
 			"10": {val: 10}
 		});
 
-		expect(st._getSortedKeys(st.get("foo"))).toEqual(["01", "02", "03", "10"]);
+		expect(st.getSortedKeys("foo")).toEqual(["01", "02", "03", "10"]);
 	});
 
 	it("must get max key correctly", function() {
@@ -174,14 +181,6 @@ describe('StringTree', function(){
 	});
 
 	it("should use custom comparators correctly", function() {
-		var reverseAlphabeticComparator = function(a, b) {
-			return (
-				a < b ? 1 :
-				a > b ? -1 :
-				0
-			);
-		}
-
 		var st = new StringTree(reverseAlphabeticComparator);
 		st.set("a", "a", {});
 		st.set("a", "b", {});
